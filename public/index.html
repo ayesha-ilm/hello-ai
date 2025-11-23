@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat Dark UI</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #121212;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    margin: 0;
+    color: #fff;
+  }
+
+  .chat-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    max-width: 700px;
+    margin: auto;
+    width: 100%;
+    border-radius: 10px;
+    background: #1e1e1e;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  }
+
+  .chat-window {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .chat-message {
+    max-width: 80%;
+    padding: 10px 15px;
+    border-radius: 15px;
+    line-height: 1.4;
+    word-wrap: break-word;
+  }
+
+  .user {
+    align-self: flex-end;
+    background: #0b93f6;
+    color: white;
+    border-bottom-right-radius: 0;
+  }
+
+  .assistant {
+    align-self: flex-start;
+    background: #2e2e2e;
+    color: #e0e0e0;
+    border-bottom-left-radius: 0;
+  }
+
+  .chat-input {
+    display: flex;
+    padding: 10px;
+    border-top: 1px solid #333;
+    background: #1b1b1b;
+  }
+
+  #msg {
+    flex: 1;
+    padding: 10px 15px;
+    border-radius: 20px;
+    border: 1px solid #555;
+    outline: none;
+    font-size: 16px;
+    background: #2e2e2e;
+    color: #fff;
+  }
+
+  #send {
+    margin-left: 10px;
+    padding: 10px 20px;
+    background: #0b93f6;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.2s;
+  }
+
+  #send:hover {
+    background: #0876d9;
+  }
+
+  /* Scrollbar styling */
+  .chat-window::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .chat-window::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 4px;
+  }
+
+  .chat-window::-webkit-scrollbar-track {
+    background: #1e1e1e;
+  }
+</style>
+</head>
+<body>
+<div class="chat-container">
+  <div class="chat-window" id="chatWindow"></div>
+  <div class="chat-input">
+    <input id="msg" placeholder="Ask something..." />
+    <button id="send">Send</button>
+    <button id="reset">Reset Chat</button>
+  </div>
+</div>
+
+
+
+<script>
+function sid() {
+  let s = localStorage.getItem("sid");
+  if (!s) {
+    s = crypto.randomUUID();
+    localStorage.setItem("sid", s);
+  }
+  return s;
+}
+
+function appendMessage(role, text) {
+  const msgDiv = document.createElement("div");
+  msgDiv.className = "chat-message " + role;
+  msgDiv.textContent = text;
+  CHAT_WINDOW.appendChild(msgDiv);
+  CHAT_WINDOW.scrollTop = CHAT_WINDOW.scrollHeight;
+}
+
+async function sendMessage() {
+  const msgInput = document.getElementById("msg");
+  const msg = msgInput.value.trim();
+  if (!msg) return;
+
+  appendMessage("user", msg);
+  msgInput.value = "";
+
+  const res = await fetch("/api/message", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sessionId: sid(), message: msg })
+  });
+
+  const data = await res.json();
+  appendMessage("assistant", data.reply);
+}
+
+document.getElementById("send").addEventListener("click", sendMessage);
+document.getElementById("msg").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") sendMessage();
+});
+</script>
+</body>
+</html>
